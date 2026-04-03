@@ -701,7 +701,7 @@
     }
 
     // ── Step rendering ─────────────────────────────────────
-    const totalSteps = 4;
+    const totalSteps = 5;
 
     function renderUpToStep(step, animate) {
       // Kill all running animations
@@ -797,18 +797,31 @@
         }
       }
 
-      // Step 2: New query, Claude picks Gmail, Drive, Slack instead
+      // Step 2: New query appears, connectors back to ghosted
       if (step >= 2) {
         userBubbleText.textContent = "Summarize the project updates from this week";
-        // Hide previous response — new query, no answer yet
         gsap.set(responseBubble, { opacity: 0 });
 
         if (animate && step === 2) {
           gsap.fromTo(userBubble, { opacity: 0.3, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.4 });
         }
+      }
+
+      // Step 3: Claude picks Gmail, Drive, Slack
+      if (step >= 3) {
+        userBubbleText.textContent = "Summarize the project updates from this week";
+        gsap.set(responseBubble, { opacity: 0 });
 
         const activeConnectors = ['gmail', 'drive', 'slack'];
         const inactiveConnectors = ['calendar'];
+
+        // All connectors visible first
+        connectors.forEach(id => {
+          const node = document.getElementById(`node-${id}`);
+          const line = document.getElementById(`line-${id}`);
+          node.classList.add('visible');
+          line.classList.add('visible');
+        });
 
         // Show active vs dimmed
         activeConnectors.forEach(id => {
@@ -828,7 +841,7 @@
         });
 
         // Start thinking pulse and particles
-        if (animate && step === 2) {
+        if (animate && step === 3) {
           startThinking();
           setTimeout(() => {
             stopThinking();
@@ -839,8 +852,8 @@
         }
       }
 
-      // Step 3: Response synthesis
-      if (step >= 3) {
+      // Step 4: Response synthesis
+      if (step >= 4) {
         const activeConnectors = ['gmail', 'drive', 'slack'];
         const inactiveConnectors = ['calendar'];
 
@@ -873,7 +886,7 @@
         userBubbleText.textContent = "Summarize the project updates from this week";
         responseBubbleText.textContent = "Based on your Slack channels, recent emails, and shared docs, here's your project summary...";
 
-        if (animate && step === 3) {
+        if (animate && step === 4) {
           gsap.fromTo(responseBubble, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, delay: 0.3, ease: 'power2.out' });
         } else {
           gsap.set(responseBubble, { opacity: 1, x: 0 });
