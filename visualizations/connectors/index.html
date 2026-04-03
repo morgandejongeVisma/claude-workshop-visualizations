@@ -802,6 +802,16 @@
         userBubbleText.textContent = "Summarize the project updates from this week";
         gsap.set(responseBubble, { opacity: 0 });
 
+        // Reset all connectors to ghosted
+        stopAllParticles();
+        connectors.forEach(id => {
+          const node = document.getElementById(`node-${id}`);
+          const line = document.getElementById(`line-${id}`);
+          node.className = `connector-node connector-${id}`;
+          line.className = 'conn-line';
+          line.style.stroke = '';
+        });
+
         if (animate && step === 2) {
           gsap.fromTo(userBubble, { opacity: 0.3, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.4 });
         }
