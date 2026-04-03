@@ -222,7 +222,8 @@
       box-shadow: 0 0 calc(var(--vw) * 2) calc(var(--vw) * 0.6) rgba(217,119,87,0.5);
     }
 
-    .claude-icon-wrap svg {
+    .claude-icon-wrap svg,
+    .claude-icon-wrap img {
       width: calc(var(--vw) * 5);
       height: calc(var(--vw) * 5);
     }
@@ -479,18 +480,7 @@
         <!-- Claude center -->
         <div class="claude-node" id="claudeNode">
           <div class="claude-icon-wrap" id="claudeIcon">
-            <svg viewBox="0 0 100 100" fill="none">
-              <!-- Claude sparkle/asterisk -->
-              <path d="M50 8 L54 40 L50 36 L46 40 Z" fill="white"/>
-              <path d="M50 92 L54 60 L50 64 L46 60 Z" fill="white"/>
-              <path d="M8 50 L40 46 L36 50 L40 54 Z" fill="white"/>
-              <path d="M92 50 L60 46 L64 50 L60 54 Z" fill="white"/>
-              <path d="M20.3 20.3 L42 38 L38 38 L38 42 Z" fill="white"/>
-              <path d="M79.7 79.7 L58 62 L62 62 L62 58 Z" fill="white"/>
-              <path d="M79.7 20.3 L62 42 L62 38 L58 38 Z" fill="white"/>
-              <path d="M20.3 79.7 L38 58 L38 62 L42 62 Z" fill="white"/>
-              <circle cx="50" cy="50" r="8" fill="white"/>
-            </svg>
+            <img src="claude.svg" alt="Claude">
           </div>
           <span class="claude-label">Claude</span>
         </div>
