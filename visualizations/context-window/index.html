@@ -102,6 +102,91 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
 
+    /* ── Waffle Menu ── */
+    .waffle-menu {
+      position: absolute;
+      top: calc(var(--vw) * 0.6);
+      left: calc(var(--vw) * 1);
+      z-index: 200;
+    }
+    .waffle-btn {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: calc(var(--vw) * 0.22);
+      padding: calc(var(--vw) * 0.4);
+      background: transparent;
+      border: none;
+      border-radius: calc(var(--vw) * 0.4);
+      cursor: pointer;
+      opacity: 0.2;
+      transition: opacity 0.2s, background 0.2s;
+    }
+    .waffle-btn:hover { opacity: 0.6; background: rgba(0,0,0,0.04); }
+    .waffle-btn.open { opacity: 0.6; background: rgba(0,0,0,0.04); }
+    .waffle-dot {
+      width: calc(var(--vw) * 0.32);
+      height: calc(var(--vw) * 0.32);
+      background: var(--color-text-inv);
+      border-radius: 50%;
+    }
+    .waffle-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + var(--vw) * 0.2);
+      left: 0;
+      background: #fff;
+      border-radius: calc(var(--vw) * 0.6);
+      box-shadow: 0 calc(var(--vw) * 0.15) calc(var(--vw) * 0.8) rgba(0,0,0,0.15);
+      min-width: calc(var(--vw) * 20);
+      overflow: hidden;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .waffle-dropdown.open { display: block; }
+    .waffle-dropdown-header {
+      padding: calc(var(--vw) * 0.5) calc(var(--vw) * 0.9);
+      font-size: calc(var(--vw) * 0.65);
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #eee;
+    }
+    .waffle-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--vw) * 0.5);
+      padding: calc(var(--vw) * 0.6) calc(var(--vw) * 0.9);
+      text-decoration: none;
+      color: var(--color-text);
+      font-size: calc(var(--vw) * 0.85);
+      font-weight: 600;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .waffle-dropdown a:hover { background: rgba(217,119,87,0.08); }
+    .waffle-dropdown a.current {
+      color: var(--color-accent1);
+      background: rgba(217,119,87,0.06);
+      pointer-events: none;
+    }
+    .waffle-dropdown a .viz-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: calc(var(--vw) * 1.5);
+      height: calc(var(--vw) * 1.5);
+      border-radius: 50%;
+      background: #f0ede6;
+      font-size: calc(var(--vw) * 0.65);
+      font-weight: 700;
+      color: #999;
+      flex-shrink: 0;
+    }
+    .waffle-dropdown a.current .viz-num {
+      background: var(--color-accent1);
+      color: var(--color-text-inv);
+    }
+
     /* ── Two-column layout ──────────────────────────────────── */
 
     .col-chat {
@@ -509,6 +594,16 @@
       </div>
     </div>
 
+    <!-- Waffle Menu -->
+    <div class="waffle-menu" id="waffleMenu">
+      <button class="waffle-btn" id="waffleBtn" aria-label="Visualization menu">
+        <span class="waffle-dot"></span><span class="waffle-dot"></span><span class="waffle-dot"></span>
+        <span class="waffle-dot"></span><span class="waffle-dot"></span><span class="waffle-dot"></span>
+        <span class="waffle-dot"></span><span class="waffle-dot"></span><span class="waffle-dot"></span>
+      </button>
+      <div class="waffle-dropdown" id="waffleDropdown"></div>
+    </div>
+
     <div class="nav-bar">
       <button class="nav-btn" id="prevBtn">&#9664;</button>
       <span class="nav-indicator" id="navIndicator">1 / 5</span>
@@ -766,6 +861,44 @@
     prevBtn.disabled = true;
     nextBtn.disabled = false;
     renderUpToStep(0, false);
+
+    // ── Waffle Menu ──
+    const VISUALIZATIONS = [
+      { slug: 'context-window', title: 'The Context Window' },
+      { slug: 'memory-types', title: 'LLM Memory Types' },
+    ];
+
+    const waffleBtn = document.getElementById('waffleBtn');
+    const waffleDropdown = document.getElementById('waffleDropdown');
+    const pathParts = window.location.pathname.replace(/\/index\.html$/, '').split('/').filter(Boolean);
+    const currentSlug = pathParts[pathParts.length - 1] || '';
+
+    const header = document.createElement('div');
+    header.className = 'waffle-dropdown-header';
+    header.textContent = 'Visualizations';
+    waffleDropdown.appendChild(header);
+
+    VISUALIZATIONS.forEach((viz, i) => {
+      const a = document.createElement('a');
+      a.href = '../' + viz.slug + '/index.html';
+      const num = document.createElement('span');
+      num.className = 'viz-num';
+      num.textContent = i + 1;
+      a.appendChild(num);
+      a.appendChild(document.createTextNode(viz.title));
+      if (viz.slug === currentSlug) a.classList.add('current');
+      waffleDropdown.appendChild(a);
+    });
+
+    waffleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = waffleDropdown.classList.toggle('open');
+      waffleBtn.classList.toggle('open', isOpen);
+    });
+    document.addEventListener('click', () => {
+      waffleDropdown.classList.remove('open');
+      waffleBtn.classList.remove('open');
+    });
   </script>
 </body>
 </html>
