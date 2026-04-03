@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connectors — Claude Workshop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=PT+Serif:wght@700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-bg: #f5f2eb;
+      --color-text: #000000;
+      --color-text-inv: #ffffff;
+      --color-accent1: #d97757;
+      --color-accent2: #cc9b7a;
+      --color-accent3: #e9b19f;
+      --vw: 1vw;
+    }
+
+    body {
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 400;
+      color: var(--color-text);
+    }
+
+    .viewport {
+      position: relative;
+      background-image: url('../../background/background.png');
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+
+    .content-card {
+      position: absolute;
+      top: 4%;
+      left: 3%;
+      right: 3%;
+      bottom: 12%;
+      background: var(--color-bg);
+      border-radius: calc(var(--vw) * 1.5);
+      overflow: hidden;
+      padding: calc(var(--vw) * 1.5);
+    }
+
+    h1, h2, h3 {
+      font-family: 'PT Serif', serif;
+      font-weight: 700;
+    }
+
+    /* Navigation bar */
+    .nav-bar {
+      position: absolute;
+      bottom: calc(var(--vw) * 1.2);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: calc(var(--vw) * 1.5);
+      z-index: 100;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.25);
+      border: none;
+      color: var(--color-text-inv);
+      font-size: calc(var(--vw) * 1.8);
+      width: calc(var(--vw) * 3.5);
+      height: calc(var(--vw) * 3.5);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .nav-btn:hover { background: rgba(255, 255, 255, 0.4); }
+    .nav-btn:disabled { opacity: 0.3; cursor: default; }
+    .nav-btn:disabled:hover { background: rgba(255, 255, 255, 0.25); }
+
+    .nav-indicator {
+      color: var(--color-text-inv);
+      font-size: calc(var(--vw) * 1.4);
+      font-weight: 600;
+      min-width: calc(var(--vw) * 6);
+      text-align: center;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    /* ── Waffle Menu ── */
+    .waffle-menu {
+      position: absolute;
+      top: calc(var(--vw) * 0.6);
+      left: calc(var(--vw) * 1);
+      z-index: 200;
+    }
+    .waffle-btn {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: calc(var(--vw) * 0.22);
+      padding: calc(var(--vw) * 0.4);
+      background: transparent;
+      border: none;
+      border-radius: calc(var(--vw) * 0.4);
+      cursor: pointer;
+      opacity: 0.2;
+      transition: opacity 0.2s, background 0.2s;
+    }
+    .waffle-btn:hover { opacity: 0.6; background: rgba(0,0,0,0.04); }
+    .waffle-btn.open { opacity: 0.6; background: rgba(0,0,0,0.04); }
+    .waffle-dot {
+      width: calc(var(--vw) * 0.32);
+      height: calc(var(--vw) * 0.32);
+      background: var(--color-text-inv);
+      border-radius: 50%;
+    }
+    .waffle-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + var(--vw) * 0.2);
+      left: 0;
+      background: #fff;
+      border-radius: calc(var(--vw) * 0.6);
+      box-shadow: 0 calc(var(--vw) * 0.15) calc(var(--vw) * 0.8) rgba(0,0,0,0.15);
+      min-width: calc(var(--vw) * 20);
+      overflow: hidden;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .waffle-dropdown.open { display: block; }
+    .waffle-dropdown-header {
+      padding: calc(var(--vw) * 0.5) calc(var(--vw) * 0.9);
+      font-size: calc(var(--vw) * 0.65);
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #eee;
+    }
+    .waffle-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--vw) * 0.5);
+      padding: calc(var(--vw) * 0.6) calc(var(--vw) * 0.9);
+      text-decoration: none;
+      color: var(--color-text);
+      font-size: calc(var(--vw) * 0.85);
+      font-weight: 600;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .waffle-dropdown a:hover { background: rgba(217,119,87,0.08); }
+    .waffle-dropdown a.current {
+      color: var(--color-accent1);
+      background: rgba(217,119,87,0.06);
+      pointer-events: none;
+    }
+    .waffle-dropdown a .viz-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: calc(var(--vw) * 1.5);
+      height: calc(var(--vw) * 1.5);
+      border-radius: 50%;
+      background: #f0ede6;
+      font-size: calc(var(--vw) * 0.65);
+      font-weight: 700;
+      color: #999;
+      flex-shrink: 0;
+    }
+    .waffle-dropdown a.current .viz-num {
+      background: var(--color-accent1);
+      color: var(--color-text-inv);
+    }
+
+    /* ── VISUALIZATION-SPECIFIC STYLES ── */
+
+    .scene {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Claude center node */
+    .claude-node {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: calc(var(--vw) * 0.6);
+      z-index: 10;
+    }
+
+    .claude-icon-wrap {
+      width: calc(var(--vw) * 10);
+      height: calc(var(--vw) * 10);
+      border-radius: 50%;
+      background: var(--color-accent1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 calc(var(--vw) * 0.3) calc(var(--vw) * 1.2) rgba(217,119,87,0.35);
+      transition: box-shadow 0.4s;
+    }
+
+    .claude-icon-wrap.thinking {
+      box-shadow: 0 0 calc(var(--vw) * 2) calc(var(--vw) * 0.6) rgba(217,119,87,0.5);
+    }
+
+    .claude-icon-wrap svg {
+      width: calc(var(--vw) * 5);
+      height: calc(var(--vw) * 5);
+    }
+
+    .claude-label {
+      font-family: 'PT Serif', serif;
+      font-weight: 700;
+      font-size: calc(var(--vw) * 1.6);
+      color: var(--color-accent1);
+    }
+
+    /* Connector nodes */
+    .connector-node {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: calc(var(--vw) * 0.5);
+      opacity: 0.08;
+      transition: opacity 0.4s;
+    }
+
+    .connector-node.visible {
+      opacity: 1;
+    }
+
+    .connector-node.dimmed {
+      opacity: 0.3;
+    }
+
+    .connector-icon-wrap {
+      width: calc(var(--vw) * 7);
+      height: calc(var(--vw) * 7);
+      border-radius: calc(var(--vw) * 1.2);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 calc(var(--vw) * 0.15) calc(var(--vw) * 0.6) rgba(0,0,0,0.1);
+    }
+
+    .connector-icon-wrap svg {
+      width: calc(var(--vw) * 4);
+      height: calc(var(--vw) * 4);
+    }
+
+    .connector-icon-wrap img {
+      width: calc(var(--vw) * 4.5);
+      height: calc(var(--vw) * 4.5);
+      object-fit: contain;
+    }
+
+    .connector-label {
+      font-size: calc(var(--vw) * 1);
+      font-weight: 600;
+      color: var(--color-text);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .connector-node.visible .connector-label {
+      opacity: 1;
+    }
+
+    .connector-node.dimmed .connector-label {
+      opacity: 0.4;
+    }
+
+    /* Connector positions */
+    .connector-gmail {
+      top: 8%;
+      left: 15%;
+    }
+
+    .connector-calendar {
+      top: 8%;
+      right: 15%;
+    }
+
+    .connector-drive {
+      bottom: 12%;
+      left: 15%;
+    }
+
+    .connector-slack {
+      bottom: 12%;
+      right: 15%;
+    }
+
+    /* Connection lines SVG layer */
+    .connections-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .conn-line {
+      fill: none;
+      stroke: #ccc;
+      stroke-width: 2;
+      stroke-dasharray: 8 6;
+      opacity: 0;
+      transition: opacity 0.4s, stroke 0.4s, stroke-width 0.4s;
+    }
+
+    .conn-line.visible {
+      opacity: 0.5;
+    }
+
+    .conn-line.active {
+      stroke: var(--color-accent1);
+      stroke-dasharray: none;
+      stroke-width: 3;
+      opacity: 0.8;
+    }
+
+    .conn-line.thick {
+      stroke-width: 5;
+      opacity: 0.9;
+    }
+
+    /* Data particles */
+    .data-particle {
+      r: 4;
+      opacity: 0;
+    }
+
+    /* Chat bubbles */
+    .chat-bubble {
+      position: absolute;
+      background: #fff;
+      border-radius: calc(var(--vw) * 0.8);
+      padding: calc(var(--vw) * 0.8) calc(var(--vw) * 1.2);
+      font-size: calc(var(--vw) * 1.1);
+      line-height: 1.4;
+      max-width: calc(var(--vw) * 22);
+      box-shadow: 0 calc(var(--vw) * 0.1) calc(var(--vw) * 0.4) rgba(0,0,0,0.1);
+      opacity: 0;
+      z-index: 15;
+    }
+
+    .chat-bubble.user-bubble {
+      left: 4%;
+      top: 42%;
+      border: 2px solid var(--color-accent2);
+    }
+
+    .chat-bubble.user-bubble::before {
+      content: '';
+      position: absolute;
+      right: calc(var(--vw) * -0.88);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: calc(var(--vw) * 0.68) solid transparent;
+      border-bottom: calc(var(--vw) * 0.68) solid transparent;
+      border-left: calc(var(--vw) * 0.88) solid var(--color-accent2);
+    }
+
+    .chat-bubble.user-bubble::after {
+      content: '';
+      position: absolute;
+      right: calc(var(--vw) * -0.7);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: calc(var(--vw) * 0.6) solid transparent;
+      border-bottom: calc(var(--vw) * 0.6) solid transparent;
+      border-left: calc(var(--vw) * 0.8) solid #fff;
+    }
+
+    .chat-bubble.response-bubble {
+      right: 4%;
+      top: 38%;
+      border: 2px solid var(--color-accent1);
+      max-width: calc(var(--vw) * 24);
+    }
+
+    .chat-bubble.response-bubble::before {
+      content: '';
+      position: absolute;
+      left: calc(var(--vw) * -0.88);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: calc(var(--vw) * 0.68) solid transparent;
+      border-bottom: calc(var(--vw) * 0.68) solid transparent;
+      border-right: calc(var(--vw) * 0.88) solid var(--color-accent1);
+    }
+
+    .chat-bubble.response-bubble::after {
+      content: '';
+      position: absolute;
+      left: calc(var(--vw) * -0.7);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: calc(var(--vw) * 0.6) solid transparent;
+      border-bottom: calc(var(--vw) * 0.6) solid transparent;
+      border-right: calc(var(--vw) * 0.8) solid #fff;
+    }
+
+    .bubble-sender {
+      font-weight: 600;
+      font-size: calc(var(--vw) * 0.8);
+      color: var(--color-accent1);
+      margin-bottom: calc(var(--vw) * 0.3);
+    }
+
+    @keyframes dashMove {
+      to { stroke-dashoffset: -28; }
+    }
+
+    .conn-line.visible {
+      animation: dashMove 1.5s linear infinite;
+    }
+
+    .conn-line.active {
+      animation: none;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="viewport" id="viewport">
+    <div class="content-card">
+      <div class="scene" id="scene">
+
+        <!-- Connection lines layer -->
+        <svg class="connections-layer" id="connSvg">
+          <defs>
+            <!-- Particle definitions added by JS -->
+          </defs>
+          <line class="conn-line" id="line-gmail" />
+          <line class="conn-line" id="line-calendar" />
+          <line class="conn-line" id="line-drive" />
+          <line class="conn-line" id="line-slack" />
+
+          <!-- Data flow particles -->
+          <circle class="data-particle" id="particle-gmail" fill="#EA4335" />
+          <circle class="data-particle" id="particle-calendar" fill="#4285F4" />
+          <circle class="data-particle" id="particle-drive" fill="#0F9D58" />
+          <circle class="data-particle" id="particle-slack" fill="#611f69" />
+        </svg>
+
+        <!-- Claude center -->
+        <div class="claude-node" id="claudeNode">
+          <div class="claude-icon-wrap" id="claudeIcon">
+            <svg viewBox="0 0 100 100" fill="none">
+              <!-- Claude sparkle/asterisk -->
+              <path d="M50 8 L54 40 L50 36 L46 40 Z" fill="white"/>
+              <path d="M50 92 L54 60 L50 64 L46 60 Z" fill="white"/>
+              <path d="M8 50 L40 46 L36 50 L40 54 Z" fill="white"/>
+              <path d="M92 50 L60 46 L64 50 L60 54 Z" fill="white"/>
+              <path d="M20.3 20.3 L42 38 L38 38 L38 42 Z" fill="white"/>
+              <path d="M79.7 79.7 L58 62 L62 62 L62 58 Z" fill="white"/>
+              <path d="M79.7 20.3 L62 42 L62 38 L58 38 Z" fill="white"/>
+              <path d="M20.3 79.7 L38 58 L38 62 L42 62 Z" fill="white"/>
+              <circle cx="50" cy="50" r="8" fill="white"/>
+            </svg>
+          </div>
+          <span class="claude-label">Claude</span>
+        </div>
+
+        <!-- Gmail connector -->
+        <div class="connector-node connector-gmail" id="node-gmail">
+          <div class="connector-icon-wrap">
+            <img src="mail icon.png" alt="Gmail">
+          </div>
+          <span class="connector-label">Gmail</span>
+        </div>
+
+        <!-- Google Calendar connector -->
+        <div class="connector-node connector-calendar" id="node-calendar">
+          <div class="connector-icon-wrap">
+            <img src="calendar icon.png" alt="Google Calendar">
+          </div>
+          <span class="connector-label">Google Calendar</span>
+        </div>
+
+        <!-- Google Drive connector -->
+        <div class="connector-node connector-drive" id="node-drive">
+          <div class="connector-icon-wrap">
+            <img src="drive icon.png" alt="Google Drive">
+          </div>
+          <span class="connector-label">Google Drive</span>
+        </div>
+
+        <!-- Slack connector -->
+        <div class="connector-node connector-slack" id="node-slack">
+          <div class="connector-icon-wrap">
+            <img src="slack icon.png" alt="Slack">
+          </div>
+          <span class="connector-label">Slack</span>
+        </div>
+
+        <!-- User query bubble -->
+        <div class="chat-bubble user-bubble" id="userBubble">
+          <div class="bubble-sender">You</div>
+          <span id="userBubbleText">What's on my schedule today?</span>
+        </div>
+
+        <!-- Response bubble -->
+        <div class="chat-bubble response-bubble" id="responseBubble">
+          <div class="bubble-sender">Claude</div>
+          <span id="responseBubbleText">Based on your Slack channels, recent emails, and shared docs, here's your project summary...</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Waffle Menu -->
+    <div class="waffle-menu" id="waffleMenu">
+      <button class="waffle-btn" id="waffleBtn" aria-label="Visualization menu">
+        <span class="waffle-dot"></span><span class="waffle-dot"></span><span class="waffle-dot"></span>
+        <span class="waffle-dot"></span><span class="waffle-dot"></span><span class="waffle-dot"></span>
+        <span class="waffle-dot"></span><span class="waffle-dot"></span><span class="waffle-dot"></span>
+      </button>
+      <div class="waffle-dropdown" id="waffleDropdown"></div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="nav-btn" id="prevBtn">&#9664;</button>
+      <span class="nav-indicator" id="navIndicator">1 / 4</span>
+      <button class="nav-btn" id="nextBtn">&#9654;</button>
+    </div>
+  </div>
+
+  <script>
+    // ── Viewport sizing (strict 16:9) ──────────────────────
+    const vp = document.getElementById('viewport');
+    function sizeViewport() {
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const ratio = 16 / 9;
+      let w, h;
+      if (winW / winH > ratio) { h = winH; w = h * ratio; }
+      else { w = winW; h = w / ratio; }
+      vp.style.width = w + 'px';
+      vp.style.height = h + 'px';
+      document.documentElement.style.setProperty('--vw', (w / 100) + 'px');
+    }
+    window.addEventListener('resize', sizeViewport);
+    sizeViewport();
+
+    // ── Element refs ───────────────────────────────────────
+    const scene = document.getElementById('scene');
+    const claudeNode = document.getElementById('claudeNode');
+    const claudeIcon = document.getElementById('claudeIcon');
+    const userBubble = document.getElementById('userBubble');
+    const userBubbleText = document.getElementById('userBubbleText');
+    const responseBubble = document.getElementById('responseBubble');
+    const responseBubbleText = document.getElementById('responseBubbleText');
+    const connSvg = document.getElementById('connSvg');
+
+    const connectors = ['gmail', 'calendar', 'drive', 'slack'];
+    const connectorColors = {
+      gmail: '#EA4335',
+      calendar: '#4285F4',
+      drive: '#0F9D58',
+      slack: '#611f69'
+    };
+
+    // ── Line position update ───────────────────────────────
+    function updateLinePositions() {
+      const sceneRect = scene.getBoundingClientRect();
+      const claudeRect = claudeIcon.getBoundingClientRect();
+      const cx = claudeRect.left + claudeRect.width / 2 - sceneRect.left;
+      const cy = claudeRect.top + claudeRect.height / 2 - sceneRect.top;
+
+      connectors.forEach(id => {
+        const node = document.getElementById(`node-${id}`);
+        const iconWrap = node.querySelector('.connector-icon-wrap');
+        const iconRect = iconWrap.getBoundingClientRect();
+        const nx = iconRect.left + iconRect.width / 2 - sceneRect.left;
+        const ny = iconRect.top + iconRect.height / 2 - sceneRect.top;
+
+        const line = document.getElementById(`line-${id}`);
+        line.setAttribute('x1', nx);
+        line.setAttribute('y1', ny);
+        line.setAttribute('x2', cx);
+        line.setAttribute('y2', cy);
+      });
+    }
+
+    // ── Particle animation ─────────────────────────────────
+    let particleTimelines = {};
+
+    function startParticles(connectorIds) {
+      stopAllParticles();
+      const sceneRect = scene.getBoundingClientRect();
+      const claudeRect = claudeIcon.getBoundingClientRect();
+      const cx = claudeRect.left + claudeRect.width / 2 - sceneRect.left;
+      const cy = claudeRect.top + claudeRect.height / 2 - sceneRect.top;
+
+      connectorIds.forEach((id, i) => {
+        const node = document.getElementById(`node-${id}`);
+        const iconWrap = node.querySelector('.connector-icon-wrap');
+        const iconRect = iconWrap.getBoundingClientRect();
+        const nx = iconRect.left + iconRect.width / 2 - sceneRect.left;
+        const ny = iconRect.top + iconRect.height / 2 - sceneRect.top;
+
+        const particle = document.getElementById(`particle-${id}`);
+        const tl = gsap.timeline({ repeat: -1, delay: i * 0.3 });
+        tl.set(particle, { attr: { cx: nx, cy: ny }, opacity: 0 });
+        tl.to(particle, { opacity: 0.9, duration: 0.15 });
+        tl.to(particle, { attr: { cx: cx, cy: cy }, duration: 1.0, ease: 'power1.in' });
+        tl.to(particle, { opacity: 0, duration: 0.2 }, '-=0.2');
+
+        particleTimelines[id] = tl;
+      });
+    }
+
+    function stopAllParticles() {
+      Object.values(particleTimelines).forEach(tl => tl.kill());
+      particleTimelines = {};
+      connectors.forEach(id => {
+        gsap.set(document.getElementById(`particle-${id}`), { opacity: 0 });
+      });
+    }
+
+    // ── Pulse animation for lines ──────────────────────────
+    let pulseTimelines = {};
+
+    function startLinePulse(connectorIds, thicknessMap) {
+      stopLinePulse();
+      connectorIds.forEach(id => {
+        const line = document.getElementById(`line-${id}`);
+        const baseWidth = thicknessMap[id] || 3;
+        const tl = gsap.timeline({ repeat: -1, yoyo: true });
+        tl.to(line, {
+          attr: { 'stroke-width': baseWidth + 2 },
+          opacity: 1,
+          duration: 1.2,
+          ease: 'sine.inOut'
+        });
+        pulseTimelines[id] = tl;
+      });
+    }
+
+    function stopLinePulse() {
+      Object.values(pulseTimelines).forEach(tl => tl.kill());
+      pulseTimelines = {};
+    }
+
+    // ── Think animation ────────────────────────────────────
+    let thinkTl = null;
+
+    function startThinking() {
+      stopThinking();
+      thinkTl = gsap.timeline({ repeat: -1, yoyo: true });
+      thinkTl.to(claudeIcon, {
+        boxShadow: `0 0 ${getVw(2.5)}px ${getVw(1)}px rgba(217,119,87,0.6)`,
+        scale: 1.05,
+        duration: 0.8,
+        ease: 'sine.inOut'
+      });
+    }
+
+    function stopThinking() {
+      if (thinkTl) { thinkTl.kill(); thinkTl = null; }
+      gsap.set(claudeIcon, { scale: 1, clearProps: 'boxShadow' });
+    }
+
+    function getVw(n) {
+      const vwPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vw'));
+      return vwPx * n;
+    }
+
+    // ── Step rendering ─────────────────────────────────────
+    const totalSteps = 4;
+
+    function renderUpToStep(step, animate) {
+      // Kill all running animations
+      gsap.killTweensOf('*');
+      stopAllParticles();
+      stopLinePulse();
+      stopThinking();
+
+      // Reset all state
+      connectors.forEach(id => {
+        const node = document.getElementById(`node-${id}`);
+        const line = document.getElementById(`line-${id}`);
+        node.className = `connector-node connector-${id}`;
+        line.className = 'conn-line';
+        line.style.strokeWidth = '';
+        line.style.opacity = '';
+        line.style.stroke = '';
+      });
+
+      gsap.set(userBubble, { opacity: 0 });
+      gsap.set(responseBubble, { opacity: 0 });
+      gsap.set(claudeIcon, { scale: 1, clearProps: 'boxShadow' });
+
+      // Update line positions after layout
+      requestAnimationFrame(() => {
+        updateLinePositions();
+        buildStep(step, animate);
+      });
+    }
+
+    function buildStep(step, animate) {
+      const dur = animate ? 0.5 : 0;
+
+      // Step 0: Claude alone with user question, connectors ghosted
+      if (step >= 0) {
+        userBubbleText.textContent = "What's on my schedule today?";
+        if (animate && step === 0) {
+          gsap.fromTo(userBubble, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' });
+        } else {
+          gsap.set(userBubble, { opacity: 1, x: 0 });
+        }
+      }
+
+      // Step 1: Connectors light up, Calendar highlighted for schedule query
+      if (step >= 1) {
+        const highlightedConnector = 'calendar';
+        const otherConnectors = ['gmail', 'drive', 'slack'];
+
+        // All connectors become visible
+        connectors.forEach((id, i) => {
+          const node = document.getElementById(`node-${id}`);
+          const line = document.getElementById(`line-${id}`);
+          node.classList.add('visible');
+          line.classList.add('visible');
+
+          if (animate && step === 1) {
+            gsap.fromTo(node, { opacity: 0.08, scale: 0.8 }, {
+              opacity: 1, scale: 1, duration: 0.5, delay: i * 0.15, ease: 'back.out(1.4)',
+              onComplete: () => { node.style.opacity = ''; node.style.transform = ''; }
+            });
+            gsap.fromTo(line, { opacity: 0 }, { opacity: 0.5, duration: 0.4, delay: i * 0.15 + 0.3 });
+          }
+        });
+
+        // Calendar line becomes active (solid, colored)
+        const calLine = document.getElementById(`line-${highlightedConnector}`);
+        calLine.className = 'conn-line active';
+        calLine.style.stroke = connectorColors[highlightedConnector];
+
+        // Dim the other connectors
+        otherConnectors.forEach(id => {
+          const node = document.getElementById(`node-${id}`);
+          node.className = `connector-node connector-${id} dimmed`;
+        });
+
+        // Particles flow from Calendar only
+        if (animate && step === 1) {
+          startThinking();
+          setTimeout(() => {
+            stopThinking();
+            startParticles([highlightedConnector]);
+          }, 1200);
+        } else {
+          startParticles([highlightedConnector]);
+        }
+
+        // Show Calendar-based response
+        responseBubbleText.textContent = "You have a team standup at 9:30, a design review at 11:00, and lunch with Sarah at 12:30.";
+        if (animate && step === 1) {
+          gsap.fromTo(responseBubble, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, delay: 1.5, ease: 'power2.out' });
+        } else {
+          gsap.set(responseBubble, { opacity: 1, x: 0 });
+        }
+      }
+
+      // Step 2: New query, Claude picks Gmail, Drive, Slack instead
+      if (step >= 2) {
+        userBubbleText.textContent = "Summarize the project updates from this week";
+        // Hide previous response — new query, no answer yet
+        gsap.set(responseBubble, { opacity: 0 });
+
+        if (animate && step === 2) {
+          gsap.fromTo(userBubble, { opacity: 0.3, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.4 });
+        }
+
+        const activeConnectors = ['gmail', 'drive', 'slack'];
+        const inactiveConnectors = ['calendar'];
+
+        // Show active vs dimmed
+        activeConnectors.forEach(id => {
+          const node = document.getElementById(`node-${id}`);
+          const line = document.getElementById(`line-${id}`);
+          node.className = `connector-node connector-${id} visible`;
+          line.className = 'conn-line active';
+          line.style.stroke = connectorColors[id];
+        });
+
+        inactiveConnectors.forEach(id => {
+          const node = document.getElementById(`node-${id}`);
+          const line = document.getElementById(`line-${id}`);
+          node.className = `connector-node connector-${id} dimmed`;
+          line.className = 'conn-line visible';
+          line.style.stroke = '';
+        });
+
+        // Start thinking pulse and particles
+        if (animate && step === 2) {
+          startThinking();
+          setTimeout(() => {
+            stopThinking();
+            startParticles(activeConnectors);
+          }, 1200);
+        } else {
+          startParticles(activeConnectors);
+        }
+      }
+
+      // Step 3: Response synthesis
+      if (step >= 3) {
+        const activeConnectors = ['gmail', 'drive', 'slack'];
+        const inactiveConnectors = ['calendar'];
+
+        activeConnectors.forEach(id => {
+          const node = document.getElementById(`node-${id}`);
+          const line = document.getElementById(`line-${id}`);
+          node.className = `connector-node connector-${id} visible`;
+          line.className = 'conn-line active';
+          line.style.stroke = connectorColors[id];
+        });
+
+        inactiveConnectors.forEach(id => {
+          const node = document.getElementById(`node-${id}`);
+          const line = document.getElementById(`line-${id}`);
+          node.className = `connector-node connector-${id} dimmed`;
+          line.className = 'conn-line visible';
+          line.style.stroke = '';
+        });
+
+        // Varying thickness for context window hint
+        const thicknessMap = { gmail: 4, drive: 6, slack: 5 };
+        activeConnectors.forEach(id => {
+          const line = document.getElementById(`line-${id}`);
+          line.style.strokeWidth = thicknessMap[id];
+        });
+
+        startParticles(activeConnectors);
+        startLinePulse(activeConnectors, thicknessMap);
+
+        userBubbleText.textContent = "Summarize the project updates from this week";
+        responseBubbleText.textContent = "Based on your Slack channels, recent emails, and shared docs, here's your project summary...";
+
+        if (animate && step === 3) {
+          gsap.fromTo(responseBubble, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, delay: 0.3, ease: 'power2.out' });
+        } else {
+          gsap.set(responseBubble, { opacity: 1, x: 0 });
+        }
+      }
+    }
+
+    // ── Navigation ─────────────────────────────────────────
+    let currentStep = 0;
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const navIndicator = document.getElementById('navIndicator');
+
+    function goToStep(n) {
+      if (n < 0 || n >= totalSteps) return;
+      const forward = n > currentStep;
+      currentStep = n;
+      renderUpToStep(n, forward);
+      navIndicator.textContent = `${n + 1} / ${totalSteps}`;
+      prevBtn.disabled = (n === 0);
+      nextBtn.disabled = (n === totalSteps - 1);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') goToStep(currentStep + 1);
+      if (e.key === 'ArrowLeft') goToStep(currentStep - 1);
+    });
+
+    prevBtn.addEventListener('click', () => goToStep(currentStep - 1));
+    nextBtn.addEventListener('click', () => goToStep(currentStep + 1));
+
+    // Handle resize — update line positions
+    window.addEventListener('resize', () => {
+      requestAnimationFrame(updateLinePositions);
+    });
+
+    // Initialize
+    navIndicator.textContent = `1 / ${totalSteps}`;
+    prevBtn.disabled = true;
+    nextBtn.disabled = (totalSteps <= 1);
+    renderUpToStep(0, false);
+
+    // ── Waffle Menu ─────────────────────────────────────────
+    const VISUALIZATIONS = [
+      { slug: 'context-window', title: 'The Context Window' },
+      { slug: 'memory-types', title: 'LLM Memory Types' },
+      { slug: 'claude-memory', title: "Claude's Memory" },
+      { slug: 'connectors', title: 'Connectors' },
+    ];
+
+    const waffleBtn = document.getElementById('waffleBtn');
+    const waffleDropdown = document.getElementById('waffleDropdown');
+    const pathParts = window.location.pathname.replace(/\/index\.html$/, '').split('/').filter(Boolean);
+    const currentSlug = pathParts[pathParts.length - 1] || '';
+
+    const waffleHeader = document.createElement('div');
+    waffleHeader.className = 'waffle-dropdown-header';
+    waffleHeader.textContent = 'Visualizations';
+    waffleDropdown.appendChild(waffleHeader);
+
+    VISUALIZATIONS.forEach((viz, i) => {
+      const a = document.createElement('a');
+      a.href = '../' + viz.slug + '/index.html';
+      const num = document.createElement('span');
+      num.className = 'viz-num';
+      num.textContent = i + 1;
+      a.appendChild(num);
+      a.appendChild(document.createTextNode(viz.title));
+      if (viz.slug === currentSlug) a.classList.add('current');
+      waffleDropdown.appendChild(a);
+    });
+
+    waffleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = waffleDropdown.classList.toggle('open');
+      waffleBtn.classList.toggle('open', isOpen);
+    });
+    document.addEventListener('click', () => {
+      waffleDropdown.classList.remove('open');
+      waffleBtn.classList.remove('open');
+    });
+  </script>
+</body>
+</html>
