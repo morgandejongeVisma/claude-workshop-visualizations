@@ -701,7 +701,7 @@
     }
 
     // ── Step rendering ─────────────────────────────────────
-    const totalSteps = 5;
+    const totalSteps = 4;
 
     function renderUpToStep(step, animate) {
       // Kill all running animations
@@ -850,39 +850,6 @@
           line.style.stroke = '';
         });
 
-        // Start thinking pulse and particles
-        if (animate && step === 3) {
-          startThinking();
-          setTimeout(() => {
-            stopThinking();
-            startParticles(activeConnectors);
-          }, 1200);
-        } else {
-          startParticles(activeConnectors);
-        }
-      }
-
-      // Step 4: Response synthesis
-      if (step >= 4) {
-        const activeConnectors = ['gmail', 'drive', 'slack'];
-        const inactiveConnectors = ['calendar'];
-
-        activeConnectors.forEach(id => {
-          const node = document.getElementById(`node-${id}`);
-          const line = document.getElementById(`line-${id}`);
-          node.className = `connector-node connector-${id} visible`;
-          line.className = 'conn-line active';
-          line.style.stroke = connectorColors[id];
-        });
-
-        inactiveConnectors.forEach(id => {
-          const node = document.getElementById(`node-${id}`);
-          const line = document.getElementById(`line-${id}`);
-          node.className = `connector-node connector-${id} dimmed`;
-          line.className = 'conn-line visible';
-          line.style.stroke = '';
-        });
-
         // Varying thickness for context window hint
         const thicknessMap = { gmail: 4, drive: 6, slack: 5 };
         activeConnectors.forEach(id => {
@@ -890,15 +857,19 @@
           line.style.strokeWidth = thicknessMap[id];
         });
 
-        startParticles(activeConnectors);
-        startLinePulse(activeConnectors, thicknessMap);
-
-        userBubbleText.textContent = "Summarize the project updates from this week";
+        // Start thinking pulse, then particles and response
         responseBubbleText.textContent = "Based on your Slack channels, recent emails, and shared docs, here's your project summary...";
-
-        if (animate && step === 4) {
-          gsap.fromTo(responseBubble, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, delay: 0.3, ease: 'power2.out' });
+        if (animate && step === 3) {
+          startThinking();
+          setTimeout(() => {
+            stopThinking();
+            startParticles(activeConnectors);
+            startLinePulse(activeConnectors, thicknessMap);
+            gsap.fromTo(responseBubble, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' });
+          }, 1200);
         } else {
+          startParticles(activeConnectors);
+          startLinePulse(activeConnectors, thicknessMap);
           gsap.set(responseBubble, { opacity: 1, x: 0 });
         }
       }
