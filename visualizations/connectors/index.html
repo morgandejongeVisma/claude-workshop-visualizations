@@ -850,13 +850,6 @@
           line.style.stroke = '';
         });
 
-        // Varying thickness for context window hint
-        const thicknessMap = { gmail: 4, drive: 6, slack: 5 };
-        activeConnectors.forEach(id => {
-          const line = document.getElementById(`line-${id}`);
-          line.style.strokeWidth = thicknessMap[id];
-        });
-
         // Start thinking pulse, then particles and response
         responseBubbleText.textContent = "Based on your Slack channels, recent emails, and shared docs, here's your project summary...";
         if (animate && step === 3) {
@@ -864,12 +857,10 @@
           setTimeout(() => {
             stopThinking();
             startParticles(activeConnectors);
-            startLinePulse(activeConnectors, thicknessMap);
             gsap.fromTo(responseBubble, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' });
           }, 1200);
         } else {
           startParticles(activeConnectors);
-          startLinePulse(activeConnectors, thicknessMap);
           gsap.set(responseBubble, { opacity: 1, x: 0 });
         }
       }
