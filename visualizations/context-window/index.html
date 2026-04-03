@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Context Window — Claude Workshop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=PT+Serif:wght@700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-bg: #f5f2eb;
+      --color-text: #000000;
+      --color-text-inv: #ffffff;
+      --color-accent1: #d97757;
+      --color-accent2: #cc9b7a;
+      --color-accent3: #e9b19f;
+      --vw: 1vw;
+    }
+
+    body {
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 400;
+      color: var(--color-text);
+    }
+
+    .viewport {
+      position: relative;
+      background-image: url('../../background/background.png');
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+
+    .content-card {
+      position: absolute;
+      top: 4%;
+      left: 3%;
+      right: 3%;
+      bottom: 12%;
+      background: var(--color-bg);
+      border-radius: calc(var(--vw) * 1.5);
+      overflow: hidden;
+      display: flex;
+      padding: calc(var(--vw) * 1.5);
+      gap: calc(var(--vw) * 1.5);
+    }
+
+    h1, h2, h3 {
+      font-family: 'PT Serif', serif;
+      font-weight: 700;
+    }
+
+    /* ── Navigation bar ─────────────────────────────────────── */
+    .nav-bar {
+      position: absolute;
+      bottom: calc(var(--vw) * 1.2);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: calc(var(--vw) * 1.5);
+      z-index: 100;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.25);
+      border: none;
+      color: var(--color-text-inv);
+      font-size: calc(var(--vw) * 1.8);
+      width: calc(var(--vw) * 3.5);
+      height: calc(var(--vw) * 3.5);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .nav-btn:hover { background: rgba(255, 255, 255, 0.4); }
+    .nav-btn:disabled { opacity: 0.3; cursor: default; }
+    .nav-btn:disabled:hover { background: rgba(255, 255, 255, 0.25); }
+
+    .nav-indicator {
+      color: var(--color-text-inv);
+      font-size: calc(var(--vw) * 1.4);
+      font-weight: 600;
+      min-width: calc(var(--vw) * 6);
+      text-align: center;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    /* ── Two-column layout ──────────────────────────────────── */
+
+    .col-chat {
+      flex: 0 0 32%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .col-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      gap: calc(var(--vw) * 1.5);
+    }
+
+    /* ── Chat window ────────────────────────────────────────── */
+    .section-label {
+      font-weight: 600;
+      font-size: calc(var(--vw) * 1.1);
+      margin-bottom: calc(var(--vw) * 0.4);
+      color: var(--color-text);
+    }
+
+    .chat-window {
+      flex: 1;
+      min-height: 0;
+      background: #fff;
+      border-radius: calc(var(--vw) * 0.8);
+      border: 2px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: var(--color-accent1);
+      color: var(--color-text-inv);
+      padding: calc(var(--vw) * 0.5) calc(var(--vw) * 1);
+      font-weight: 600;
+      font-size: calc(var(--vw) * 1);
+      display: flex;
+      align-items: center;
+      gap: calc(var(--vw) * 0.4);
+    }
+
+    .chat-header .dot {
+      width: calc(var(--vw) * 0.45);
+      height: calc(var(--vw) * 0.45);
+      background: rgba(255,255,255,0.5);
+      border-radius: 50%;
+    }
+
+    .chat-messages {
+      flex: 1;
+      min-height: 0;
+      padding: calc(var(--vw) * 0.6);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--vw) * 0.4);
+    }
+
+    .chat-bubble {
+      max-width: 90%;
+      padding: calc(var(--vw) * 0.4) calc(var(--vw) * 0.7);
+      border-radius: calc(var(--vw) * 0.5);
+      font-size: calc(var(--vw) * 0.95);
+      line-height: 1.4;
+    }
+
+    .chat-bubble.user {
+      background: var(--color-accent1);
+      color: var(--color-text-inv);
+      align-self: flex-end;
+      border-bottom-right-radius: calc(var(--vw) * 0.1);
+    }
+
+    .chat-bubble.claude {
+      background: #f0ede6;
+      color: var(--color-text);
+      align-self: flex-start;
+      border-bottom-left-radius: calc(var(--vw) * 0.1);
+    }
+
+    .chat-input {
+      border-top: 1px solid #ddd;
+      padding: calc(var(--vw) * 0.35) calc(var(--vw) * 0.5);
+      display: flex;
+      gap: calc(var(--vw) * 0.3);
+    }
+
+    .chat-input-field {
+      flex: 1;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: calc(var(--vw) * 0.35);
+      padding: calc(var(--vw) * 0.25) calc(var(--vw) * 0.5);
+      font-size: calc(var(--vw) * 0.8);
+      font-family: 'Montserrat', sans-serif;
+      color: #999;
+    }
+
+    .chat-input-send {
+      background: var(--color-accent1);
+      border: none;
+      color: white;
+      border-radius: calc(var(--vw) * 0.35);
+      padding: calc(var(--vw) * 0.25) calc(var(--vw) * 0.6);
+      font-size: calc(var(--vw) * 0.75);
+      cursor: default;
+    }
+
+    /* ── Bar chart ──────────────────────────────────────────── */
+    .chart-area {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-container {
+      flex: 1;
+      min-height: 0;
+      background: #fff;
+      border-radius: calc(var(--vw) * 0.8);
+      border: 2px solid #e0ddd6;
+      padding: calc(var(--vw) * 1.5) calc(var(--vw) * 2) calc(var(--vw) * 1) calc(var(--vw) * 2);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-title {
+      font-family: 'PT Serif', serif;
+      font-weight: 700;
+      font-size: calc(var(--vw) * 1.5);
+      margin-bottom: calc(var(--vw) * 0.8);
+    }
+
+    .chart-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: flex-end;
+      position: relative;
+    }
+
+    .chart-y-axis {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: calc(var(--vw) * 2.2);
+      width: calc(var(--vw) * 4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-right: calc(var(--vw) * 0.5);
+    }
+
+    .chart-y-label {
+      font-size: calc(var(--vw) * 0.7);
+      color: #999;
+    }
+
+    .chart-bars-area {
+      flex: 1;
+      margin-left: calc(var(--vw) * 4.5);
+      display: flex;
+      align-items: flex-end;
+      gap: calc(var(--vw) * 1.5);
+      height: 100%;
+      padding-bottom: calc(var(--vw) * 2.2);
+      position: relative;
+    }
+
+    /* Horizontal grid lines */
+    .chart-bars-area::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      top: 0;
+      bottom: calc(var(--vw) * 2.2);
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent calc(25% - 0.5px),
+        #eee calc(25% - 0.5px),
+        #eee calc(25%)
+      );
+      pointer-events: none;
+    }
+
+    .bar-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      position: relative;
+      z-index: 1;
+    }
+
+    .bar-stack {
+      width: 65%;
+      display: flex;
+      flex-direction: column-reverse;
+      border-radius: calc(var(--vw) * 0.3) calc(var(--vw) * 0.3) 0 0;
+      overflow: hidden;
+      transition: height 0.6s ease;
+    }
+
+    .bar-segment {
+      width: 100%;
+      transition: height 0.6s ease;
+      position: relative;
+    }
+
+    .bar-segment.previous {
+      background: var(--color-accent3);
+    }
+
+    .bar-segment.new-user {
+      background: var(--color-accent1);
+    }
+
+    .bar-segment.new-claude {
+      background: var(--color-accent2);
+    }
+
+    .bar-token-label {
+      font-size: calc(var(--vw) * 0.8);
+      font-weight: 600;
+      color: var(--color-accent1);
+      text-align: center;
+      margin-top: calc(var(--vw) * 0.3);
+      opacity: 0;
+    }
+
+    .bar-x-label {
+      font-size: calc(var(--vw) * 0.85);
+      color: #666;
+      text-align: center;
+      position: absolute;
+      bottom: calc(var(--vw) * -2);
+      width: 100%;
+    }
+
+    /* Legend */
+    .chart-legend {
+      display: flex;
+      gap: calc(var(--vw) * 2);
+      justify-content: center;
+      margin-top: calc(var(--vw) * 0.8);
+      flex-shrink: 0;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--vw) * 0.4);
+      font-size: calc(var(--vw) * 0.8);
+      color: #666;
+    }
+
+    .legend-swatch {
+      width: calc(var(--vw) * 1.2);
+      height: calc(var(--vw) * 1.2);
+      border-radius: calc(var(--vw) * 0.2);
+    }
+
+    /* ── Context meter ──────────────────────────────────────── */
+    .meter-area {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--vw) * 0.3);
+    }
+
+    .meter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .meter-track {
+      height: calc(var(--vw) * 1.8);
+      background: #e8e5de;
+      border-radius: calc(var(--vw) * 0.9);
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--color-accent2), var(--color-accent1));
+      border-radius: calc(var(--vw) * 0.9);
+      transition: width 0.8s ease;
+    }
+
+    .meter-fill.warning {
+      background: linear-gradient(90deg, var(--color-accent1), #c0392b);
+    }
+
+    .meter-pct {
+      font-weight: 600;
+      font-size: calc(var(--vw) * 1.1);
+      transition: color 0.5s ease;
+    }
+
+    .meter-pct.warning { color: #c0392b; }
+
+    /* ── Insight callout ────────────────────────────────────── */
+    .insight-callout {
+      background: rgba(217, 119, 87, 0.08);
+      border: 2px solid var(--color-accent1);
+      border-radius: calc(var(--vw) * 0.6);
+      padding: calc(var(--vw) * 0.8) calc(var(--vw) * 1.2);
+      text-align: center;
+      font-size: calc(var(--vw) * 1);
+      line-height: 1.5;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .insight-callout strong { color: var(--color-accent1); }
+  </style>
+</head>
+<body>
+  <div class="viewport" id="viewport">
+    <div class="content-card">
+
+      <!-- LEFT: Chat window -->
+      <div class="col-chat">
+        <div class="section-label">Chat Session</div>
+        <div class="chat-window">
+          <div class="chat-header">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <span style="margin-left: calc(var(--vw) * 0.3);">Claude</span>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-input">
+            <div class="chat-input-field">Type a message...</div>
+            <div class="chat-input-send">Send</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Chart + Context meter -->
+      <div class="col-right">
+
+        <!-- Bar chart -->
+        <div class="chart-area">
+          <div class="section-label">Tokens sent per API call</div>
+          <div class="chart-container">
+            <div class="chart-body">
+              <div class="chart-y-axis" id="yAxis">
+                <span class="chart-y-label">800</span>
+                <span class="chart-y-label">600</span>
+                <span class="chart-y-label">400</span>
+                <span class="chart-y-label">200</span>
+                <span class="chart-y-label">0</span>
+              </div>
+              <div class="chart-bars-area" id="barsArea">
+                <!-- Bars are built by JS -->
+              </div>
+            </div>
+            <div class="chart-legend">
+              <div class="legend-item">
+                <div class="legend-swatch" style="background: var(--color-accent3);"></div>
+                <span>Previous context (re-sent)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch" style="background: var(--color-accent1);"></div>
+                <span>New user message</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch" style="background: var(--color-accent2);"></div>
+                <span>New Claude response</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Context meter -->
+        <div class="meter-area">
+          <div class="meter-header">
+            <span class="section-label" style="margin-bottom: 0;">Context Window Usage</span>
+            <span class="meter-pct" id="meterPct">0%</span>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill" id="meterFill"></div>
+          </div>
+        </div>
+
+        <!-- Insight -->
+        <div class="insight-callout" id="insightCallout">
+          Each bar includes <strong>all previous messages</strong> — the entire conversation is re-sent with every API call. There is <strong>no server-side session</strong>.
+        </div>
+
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="nav-btn" id="prevBtn">&#9664;</button>
+      <span class="nav-indicator" id="navIndicator">1 / 5</span>
+      <button class="nav-btn" id="nextBtn">&#9654;</button>
+    </div>
+  </div>
+
+  <script>
+    // ── Viewport sizing ──────────────────────────────────────
+    const vp = document.getElementById('viewport');
+    function sizeViewport() {
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const ratio = 16 / 9;
+      let w, h;
+      if (winW / winH > ratio) { h = winH; w = h * ratio; }
+      else { w = winW; h = w / ratio; }
+      vp.style.width = w + 'px';
+      vp.style.height = h + 'px';
+      document.documentElement.style.setProperty('--vw', (w / 100) + 'px');
+    }
+    window.addEventListener('resize', sizeViewport);
+    sizeViewport();
+
+    // ── Data ─────────────────────────────────────────────────
+    const exchanges = [
+      {
+        user: 'Tell me about photosynthesis',
+        claude: 'Photosynthesis is the process by which plants convert sunlight, water, and CO\u2082 into glucose and oxygen. It occurs in the chloroplasts using chlorophyll.',
+        userTokens: 8,
+        claudeTokens: 42,
+      },
+      {
+        user: 'How does chlorophyll work exactly?',
+        claude: 'Chlorophyll absorbs red and blue light while reflecting green. Photons excite electrons to higher energy states, initiating the light-dependent reactions of photosynthesis.',
+        userTokens: 10,
+        claudeTokens: 48,
+      },
+      {
+        user: 'What happens in the light-dependent reactions?',
+        claude: 'Water molecules are split, releasing oxygen. Excited electrons pass through an electron transport chain, generating ATP and NADPH \u2014 the energy carriers for the Calvin cycle.',
+        userTokens: 12,
+        claudeTokens: 52,
+      },
+      {
+        user: 'Explain the Calvin cycle in detail',
+        claude: 'CO\u2082 is fixed by RuBisCO into 3-PGA, reduced using ATP and NADPH to form G3P. Some G3P regenerates RuBP to continue the cycle; the rest exits to form glucose and other sugars.',
+        userTokens: 9,
+        claudeTokens: 58,
+      },
+    ];
+
+    // Precompute cumulative tokens for each API call
+    // Each call sends ALL previous messages + the new user message.
+    // The response adds tokens to the running total for the NEXT call.
+    const barData = [];
+    let cumulative = 0;
+    for (let i = 0; i < exchanges.length; i++) {
+      const ex = exchanges[i];
+      const previousContext = cumulative;
+      const newUser = ex.userTokens;
+      const newClaude = ex.claudeTokens;
+      const totalSent = previousContext + newUser; // what gets SENT in the request
+      const totalAfter = previousContext + newUser + newClaude; // after response comes back
+      barData.push({ previousContext, newUser, newClaude, totalSent, totalAfter });
+      cumulative = totalAfter;
+    }
+
+    const maxTokens = barData[barData.length - 1].totalAfter;
+    const chartMax = Math.ceil(maxTokens / 100) * 100 + 100; // rounded up for nice axis
+
+    // ── State ────────────────────────────────────────────────
+    // Step 0: empty scene
+    // Steps 1-4: each adds one exchange
+    let currentStep = 0;
+    const totalSteps = exchanges.length + 1;
+
+    // ── DOM refs ─────────────────────────────────────────────
+    const chatMessages = document.getElementById('chatMessages');
+    const barsArea = document.getElementById('barsArea');
+    const meterFill = document.getElementById('meterFill');
+    const meterPct = document.getElementById('meterPct');
+    const insightCallout = document.getElementById('insightCallout');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const navIndicator = document.getElementById('navIndicator');
+
+    // Update Y-axis labels
+    const yLabels = document.getElementById('yAxis').querySelectorAll('.chart-y-label');
+    const ySteps = [chartMax, chartMax * 0.75, chartMax * 0.5, chartMax * 0.25, 0];
+    yLabels.forEach((el, i) => { el.textContent = Math.round(ySteps[i]); });
+
+    // ── Build bar DOM ────────────────────────────────────────
+    // Pre-create all 4 bar groups, but start them at zero height
+    const barEls = [];
+    for (let i = 0; i < exchanges.length; i++) {
+      const group = document.createElement('div');
+      group.className = 'bar-group';
+
+      const stack = document.createElement('div');
+      stack.className = 'bar-stack';
+      stack.style.height = '0px';
+
+      const segPrev = document.createElement('div');
+      segPrev.className = 'bar-segment previous';
+      segPrev.style.height = '0px';
+
+      const segUser = document.createElement('div');
+      segUser.className = 'bar-segment new-user';
+      segUser.style.height = '0px';
+
+      const segClaude = document.createElement('div');
+      segClaude.className = 'bar-segment new-claude';
+      segClaude.style.height = '0px';
+
+      // column-reverse means first child = bottom visually
+      stack.appendChild(segPrev);
+      stack.appendChild(segUser);
+      stack.appendChild(segClaude);
+
+      const tokenLabel = document.createElement('div');
+      tokenLabel.className = 'bar-token-label';
+
+      const xLabel = document.createElement('div');
+      xLabel.className = 'bar-x-label';
+      xLabel.textContent = 'Call ' + (i + 1);
+
+      group.appendChild(stack);
+      group.appendChild(tokenLabel);
+      group.appendChild(xLabel);
+      barsArea.appendChild(group);
+
+      barEls.push({ group, stack, segPrev, segUser, segClaude, tokenLabel });
+    }
+
+    // ── Render ───────────────────────────────────────────────
+    function getBarAreaHeight() {
+      // Available height for bars (minus x-label space)
+      return barsArea.clientHeight - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vw')) * 2.2;
+    }
+
+    function tokensToPx(tokens) {
+      const h = getBarAreaHeight();
+      return (tokens / chartMax) * h;
+    }
+
+    function renderUpToStep(step, animate) {
+      // Chat
+      chatMessages.innerHTML = '';
+      for (let i = 0; i < Math.min(step, exchanges.length); i++) {
+        const ex = exchanges[i];
+
+        const userBubble = document.createElement('div');
+        userBubble.className = 'chat-bubble user';
+        userBubble.textContent = ex.user;
+        chatMessages.appendChild(userBubble);
+
+        const claudeBubble = document.createElement('div');
+        claudeBubble.className = 'chat-bubble claude';
+        claudeBubble.textContent = ex.claude;
+        chatMessages.appendChild(claudeBubble);
+
+        if (animate && i === step - 1) {
+          gsap.fromTo(userBubble, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35 });
+          gsap.fromTo(claudeBubble, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, delay: 0.15 });
+        }
+      }
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Bars
+      for (let i = 0; i < exchanges.length; i++) {
+        const el = barEls[i];
+        if (i < step) {
+          const d = barData[i];
+          const totalHeight = tokensToPx(d.totalAfter);
+          const prevH = tokensToPx(d.previousContext);
+          const userH = tokensToPx(d.newUser);
+          const claudeH = tokensToPx(d.newClaude);
+
+          if (animate && i === step - 1) {
+            gsap.to(el.stack, { height: totalHeight, duration: 0.6, ease: 'power2.out' });
+            gsap.to(el.segPrev, { height: prevH, duration: 0.6, ease: 'power2.out' });
+            gsap.to(el.segUser, { height: userH, duration: 0.6, ease: 'power2.out' });
+            gsap.to(el.segClaude, { height: claudeH, duration: 0.6, ease: 'power2.out' });
+            el.tokenLabel.textContent = d.totalAfter + ' tokens';
+            gsap.to(el.tokenLabel, { opacity: 1, duration: 0.3, delay: 0.4 });
+          } else {
+            el.stack.style.height = totalHeight + 'px';
+            el.segPrev.style.height = prevH + 'px';
+            el.segUser.style.height = userH + 'px';
+            el.segClaude.style.height = claudeH + 'px';
+            el.tokenLabel.textContent = d.totalAfter + ' tokens';
+            el.tokenLabel.style.opacity = '1';
+          }
+        } else {
+          el.stack.style.height = '0px';
+          el.segPrev.style.height = '0px';
+          el.segUser.style.height = '0px';
+          el.segClaude.style.height = '0px';
+          el.tokenLabel.style.opacity = '0';
+        }
+      }
+
+      // Context meter — scale so 4 exchanges ≈ 30% (to feel realistic for 200K window)
+      const totalTokens = step > 0 ? barData[Math.min(step, exchanges.length) - 1].totalAfter : 0;
+      const visualPct = Math.min((totalTokens / 800) * 100, 100); // scaled for visual impact
+      if (animate && step > 0) {
+        gsap.to(meterFill, { width: visualPct + '%', duration: 0.8 });
+      } else {
+        meterFill.style.width = visualPct + '%';
+      }
+      meterPct.textContent = visualPct.toFixed(0) + '%';
+
+      if (visualPct > 80) {
+        meterFill.classList.add('warning');
+        meterPct.classList.add('warning');
+      } else {
+        meterFill.classList.remove('warning');
+        meterPct.classList.remove('warning');
+      }
+
+      // Insight: show from step 2 onward (once pattern of growing bars is visible)
+      if (step >= 2) {
+        if (animate && step === 2) {
+          gsap.to(insightCallout, { opacity: 1, duration: 0.5 });
+        } else {
+          insightCallout.style.opacity = '1';
+        }
+      } else {
+        insightCallout.style.opacity = '0';
+      }
+    }
+
+    // ── Navigation ───────────────────────────────────────────
+    function goToStep(n) {
+      if (n < 0 || n >= totalSteps) return;
+      const forward = n > currentStep;
+      currentStep = n;
+      renderUpToStep(n, forward);
+      navIndicator.textContent = `${n + 1} / ${totalSteps}`;
+      prevBtn.disabled = (n === 0);
+      nextBtn.disabled = (n === totalSteps - 1);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') goToStep(currentStep + 1);
+      if (e.key === 'ArrowLeft') goToStep(currentStep - 1);
+    });
+
+    prevBtn.addEventListener('click', () => goToStep(currentStep - 1));
+    nextBtn.addEventListener('click', () => goToStep(currentStep + 1));
+
+    // Initialize
+    navIndicator.textContent = `1 / ${totalSteps}`;
+    prevBtn.disabled = true;
+    nextBtn.disabled = false;
+    renderUpToStep(0, false);
+  </script>
+</body>
+</html>

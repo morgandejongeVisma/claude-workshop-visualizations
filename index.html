@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Workshop Visualizations — Idella</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=PT+Serif:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-bg: #f5f2eb;
+      --color-text: #000000;
+      --color-text-inv: #ffffff;
+      --color-accent1: #d97757;
+      --color-accent2: #cc9b7a;
+      --color-accent3: #e9b19f;
+      --vw: 1vw;
+    }
+
+    body {
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Montserrat', sans-serif;
+      color: var(--color-text);
+    }
+
+    .viewport {
+      position: relative;
+      background-image: url('background/background.png');
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+
+    .content-card {
+      position: absolute;
+      top: 4%;
+      left: 3%;
+      right: 3%;
+      bottom: 6%;
+      background: var(--color-bg);
+      border-radius: calc(var(--vw) * 1.5);
+      padding: calc(var(--vw) * 4);
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-family: 'PT Serif', serif;
+      font-weight: 700;
+      font-size: calc(var(--vw) * 4);
+      margin-bottom: calc(var(--vw) * 1);
+    }
+
+    .subtitle {
+      font-size: calc(var(--vw) * 1.6);
+      color: #666;
+      margin-bottom: calc(var(--vw) * 3);
+    }
+
+    .viz-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(calc(var(--vw) * 28), 1fr));
+      gap: calc(var(--vw) * 2);
+      flex: 1;
+      align-content: start;
+    }
+
+    .viz-card {
+      background: var(--color-bg);
+      border: 2px solid var(--color-accent2);
+      border-radius: calc(var(--vw) * 1);
+      padding: calc(var(--vw) * 2.5);
+      text-decoration: none;
+      color: var(--color-text);
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--vw) * 0.8);
+    }
+
+    .viz-card:hover {
+      border-color: var(--color-accent1);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(217, 119, 87, 0.2);
+    }
+
+    .viz-card h2 {
+      font-family: 'PT Serif', serif;
+      font-weight: 700;
+      font-size: calc(var(--vw) * 2);
+    }
+
+    .viz-card .tag {
+      display: inline-block;
+      background: var(--color-accent1);
+      color: var(--color-text-inv);
+      font-size: calc(var(--vw) * 1);
+      font-weight: 600;
+      padding: calc(var(--vw) * 0.3) calc(var(--vw) * 0.8);
+      border-radius: calc(var(--vw) * 0.4);
+      align-self: flex-start;
+    }
+
+    .viz-card p {
+      font-size: calc(var(--vw) * 1.4);
+      line-height: 1.5;
+      color: #444;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="viewport" id="viewport">
+    <div class="content-card">
+      <h1>Claude Workshop Visualizations</h1>
+      <p class="subtitle">Interactive simulations for Idella's AI workshop series</p>
+
+      <div class="viz-grid">
+        <a class="viz-card" href="visualizations/context-window/index.html">
+          <span class="tag">Workshop 1</span>
+          <h2>The Context Window</h2>
+          <p>How Claude's context works — growing conversation payloads, the full-history send model, and what happens when the window fills up.</p>
+        </a>
+
+        <!-- Add more visualization cards here -->
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const vp = document.getElementById('viewport');
+    function sizeViewport() {
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const ratio = 16 / 9;
+      let w, h;
+      if (winW / winH > ratio) {
+        h = winH; w = h * ratio;
+      } else {
+        w = winW; h = w / ratio;
+      }
+      vp.style.width = w + 'px';
+      vp.style.height = h + 'px';
+      document.documentElement.style.setProperty('--vw', (w / 100) + 'px');
+    }
+    window.addEventListener('resize', sizeViewport);
+    sizeViewport();
+  </script>
+</body>
+</html>
