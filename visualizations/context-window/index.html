@@ -151,6 +151,25 @@
       letter-spacing: 0.05em;
       border-bottom: 1px solid #eee;
     }
+    .waffle-home {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--vw) * 0.5);
+      padding: calc(var(--vw) * 0.6) calc(var(--vw) * 0.9);
+      text-decoration: none;
+      color: var(--color-text);
+      font-size: calc(var(--vw) * 0.85);
+      font-weight: 600;
+      transition: background 0.15s;
+      white-space: nowrap;
+      border-bottom: 1px solid #eee;
+    }
+    .waffle-home:hover { background: rgba(217,119,87,0.08); }
+    .waffle-home svg {
+      width: calc(var(--vw) * 1.2);
+      height: calc(var(--vw) * 1.2);
+      flex-shrink: 0;
+    }
     .waffle-dropdown a {
       display: flex;
       align-items: center;
@@ -517,6 +536,34 @@
     }
 
     .insight-callout strong { color: var(--color-accent1); }
+
+    /* ── Laser Pointer ── */
+    .laser-active { cursor: none !important; }
+    .laser-active * { cursor: none !important; }
+    .laser-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+      display: none;
+    }
+    .laser-canvas.visible { display: block; }
+    .laser-dot {
+      position: fixed;
+      width: 14px;
+      height: 14px;
+      background: radial-gradient(circle, #ff0000 0%, #ff0000 40%, rgba(255,0,0,0.6) 70%, transparent 100%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      display: none;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px 2px rgba(255, 0, 0, 0.5);
+    }
+    .laser-dot.visible { display: block; }
   </style>
 </head>
 <body>
@@ -876,6 +923,12 @@
     const pathParts = window.location.pathname.replace(/\/index\.html$/, '').split('/').filter(Boolean);
     const currentSlug = pathParts[pathParts.length - 1] || '';
 
+    const homeLink = document.createElement('a');
+    homeLink.className = 'waffle-home';
+    homeLink.href = '../../index.html';
+    homeLink.innerHTML = '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>Home';
+    waffleDropdown.appendChild(homeLink);
+
     const header = document.createElement('div');
     header.className = 'waffle-dropdown-header';
     header.textContent = 'Visualizations';
@@ -902,6 +955,91 @@
       waffleDropdown.classList.remove('open');
       waffleBtn.classList.remove('open');
     });
+
+    // ── Laser Pointer ──────────────────────────────────────
+    (function() {
+      const laserDot = document.createElement('div');
+      laserDot.className = 'laser-dot';
+      document.body.appendChild(laserDot);
+
+      const canvas = document.createElement('canvas');
+      canvas.className = 'laser-canvas';
+      document.body.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+
+      function sizeCanvas() {
+        canvas.width = window.innerWidth * devicePixelRatio;
+        canvas.height = window.innerHeight * devicePixelRatio;
+        ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+      }
+      sizeCanvas();
+      window.addEventListener('resize', sizeCanvas);
+
+      let laserActive = false;
+      const points = [];
+      const MAX_AGE = 200;
+      let animFrame = null;
+
+      function drawTrail() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const now = Date.now();
+
+        // Remove old points
+        while (points.length > 0 && now - points[0].t > MAX_AGE) {
+          points.shift();
+        }
+
+        if (points.length < 2) {
+          if (laserActive || points.length > 0) animFrame = requestAnimationFrame(drawTrail);
+          return;
+        }
+
+        for (let i = 1; i < points.length; i++) {
+          const p0 = points[i - 1];
+          const p1 = points[i];
+          const age = now - p1.t;
+          const alpha = Math.max(0, 1 - age / MAX_AGE) * 0.45;
+          const width = Math.max(1, (1 - age / MAX_AGE) * 5);
+
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.strokeStyle = `rgba(255, 0, 0, ${alpha})`;
+          ctx.lineWidth = width;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.stroke();
+        }
+
+        if (laserActive || points.length > 0) {
+          animFrame = requestAnimationFrame(drawTrail);
+        }
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'l' || e.key === 'L') {
+          if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+          laserActive = !laserActive;
+          document.body.classList.toggle('laser-active', laserActive);
+          laserDot.classList.toggle('visible', laserActive);
+          canvas.classList.toggle('visible', laserActive);
+          if (laserActive) {
+            points.length = 0;
+            animFrame = requestAnimationFrame(drawTrail);
+          } else {
+            // Let remaining trail fade out
+            animFrame = requestAnimationFrame(drawTrail);
+          }
+        }
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!laserActive) return;
+        laserDot.style.left = e.clientX + 'px';
+        laserDot.style.top = e.clientY + 'px';
+        points.push({ x: e.clientX, y: e.clientY, t: Date.now() });
+      });
+    })();
   </script>
 </body>
 </html>
